@@ -183,16 +183,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserPassword(id: string, hashedPassword: string): Promise<void> {
-    await db.update(users).set({ password: hashedPassword }).where(eq(users.id, id));
+    await db.update(users)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, id));
   }
 
   async updateUserProfile(id: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<void> {
-    const updates: any = {};
+    const updates: any = {
+      updatedAt: new Date()
+    };
     if (data.firstName !== undefined) updates.firstName = data.firstName;
     if (data.lastName !== undefined) updates.lastName = data.lastName;
     if (data.email !== undefined) updates.email = data.email;
     
-    if (Object.keys(updates).length > 0) {
+    if (Object.keys(updates).length > 1) { // more than just updatedAt
       await db.update(users).set(updates).where(eq(users.id, id));
     }
   }
