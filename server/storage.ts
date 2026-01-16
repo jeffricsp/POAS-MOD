@@ -72,6 +72,7 @@ export interface IStorage {
   setProgramPOMappings(programId: number, poIds: number[]): Promise<void>;
 
   getBoardExamResults(programId: number): Promise<BoardExamResult[]>;
+  getBoardExamResult(id: number): Promise<BoardExamResult | undefined>;
   createBoardExamResult(data: any): Promise<BoardExamResult>;
   updateBoardExamResult(id: number, data: any): Promise<BoardExamResult>;
   deleteBoardExamResult(id: number): Promise<void>;
@@ -617,10 +618,37 @@ export class DatabaseStorage implements IStorage {
   async createProgram(program: any): Promise<Program> {
     await db.insert(programs).values(program);
     const [newProgram] = await db.select().from(programs).where(eq(programs.code, program.code));
+    
+    // Set programId for the assigned program head
+    if (program.programHeadId) {
+      await db.update(users)
+        .set({ programId: newProgram.id })
+        .where(eq(users.id, program.programHeadId));
+    }
+    
     return newProgram;
   }
 
   async updateProgram(id: number, program: any): Promise<Program> {
+    // If programHeadId is being updated, sync the user's programId
+    if (program.programHeadId !== undefined) {
+      const [existingProgram] = await db.select().from(programs).where(eq(programs.id, id));
+      
+      // Clear programId from old program head if exists
+      if (existingProgram?.programHeadId && existingProgram.programHeadId !== program.programHeadId) {
+        await db.update(users)
+          .set({ programId: null })
+          .where(eq(users.id, existingProgram.programHeadId));
+      }
+      
+      // Set programId for new program head
+      if (program.programHeadId) {
+        await db.update(users)
+          .set({ programId: id })
+          .where(eq(users.id, program.programHeadId));
+      }
+    }
+    
     await db.update(programs).set(program).where(eq(programs.id, id));
     const [updated] = await db.select().from(programs).where(eq(programs.id, id));
     return updated;
@@ -646,6 +674,11 @@ export class DatabaseStorage implements IStorage {
 
   async getBoardExamResults(programId: number): Promise<BoardExamResult[]> {
     return await db.select().from(boardExamResults).where(eq(boardExamResults.programId, programId)).orderBy(desc(boardExamResults.createdAt));
+  }
+
+  async getBoardExamResult(id: number): Promise<BoardExamResult | undefined> {
+    const [result] = await db.select().from(boardExamResults).where(eq(boardExamResults.id, id));
+    return result;
   }
 
   async createBoardExamResult(data: any): Promise<BoardExamResult> {

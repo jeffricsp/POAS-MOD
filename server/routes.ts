@@ -6,6 +6,18 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import crypto from 'crypto';
 import { sendInvitationEmail } from './email';
+import { db } from "./db";
+import { boardExamResults } from "@shared/schema";
+import { eq } from "drizzle-orm";
+
+// Authorization helper for program head access control
+function checkProgramHeadAuthorization(user: any, programId: number): boolean {
+  if (user.role === 'admin') return true;
+  if (user.role === 'program_head') {
+    return user.programId === programId;
+  }
+  return false;
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -426,6 +438,13 @@ export async function registerRoutes(
 
   app.post('/api/programs/:programId/pos', isAuthenticated, async (req, res) => {
     try {
+      const user = req.user as any;
+      const programId = parseInt(req.params.programId);
+      
+      if (!checkProgramHeadAuthorization(user, programId)) {
+        return res.status(403).json({ message: "Not authorized to modify this program" });
+      }
+      
       const { code, description } = req.body;
       const po = await storage.createPO({ 
         programId: parseInt(req.params.programId), 
@@ -439,12 +458,26 @@ export async function registerRoutes(
   });
 
   app.put('/api/programs/:programId/pos/:poId', isAuthenticated, async (req, res) => {
+    const user = req.user as any;
+    const programId = parseInt(req.params.programId);
+    
+    if (!checkProgramHeadAuthorization(user, programId)) {
+      return res.status(403).json({ message: "Not authorized to modify this program" });
+    }
+    
     const { code, description } = req.body;
     const po = await storage.updatePO(parseInt(req.params.poId), { code, description });
     res.json(po);
   });
 
   app.delete('/api/programs/:programId/pos/:poId', isAuthenticated, async (req, res) => {
+    const user = req.user as any;
+    const programId = parseInt(req.params.programId);
+    
+    if (!checkProgramHeadAuthorization(user, programId)) {
+      return res.status(403).json({ message: "Not authorized to modify this program" });
+    }
+    
     await storage.deletePO(parseInt(req.params.poId));
     res.status(204).send();
   });
@@ -456,7 +489,13 @@ export async function registerRoutes(
   });
 
   app.post(api.boardExams.create.path, isAuthenticated, async (req, res) => {
+    const user = req.user as any;
     const programId = parseInt(req.params.programId);
+    
+    if (!checkProgramHeadAuthorization(user, programId)) {
+      return res.status(403).json({ message: "Not authorized to add board exam results for this program" });
+    }
+    
     const { examName, examDate, passers, takers, notes } = req.body;
     const result = await storage.createBoardExamResult({ 
       programId, 
@@ -470,12 +509,40 @@ export async function registerRoutes(
   });
 
   app.put(api.boardExams.update.path, isAuthenticated, async (req, res) => {
+    const user = req.user as any;
+    
+    // Fetch board exam to check programId
+    const examId = parseInt(req.params.id);
+    const [existingExam] = await db.select().from(boardExamResults).where(eq(boardExamResults.id, examId));
+    
+    if (!existingExam) {
+      return res.status(404).json({ message: "Board exam result not found" });
+    }
+    
+    if (!checkProgramHeadAuthorization(user, existingExam.programId)) {
+      return res.status(403).json({ message: "Not authorized to update this board exam result" });
+    }
+    
     const input = api.boardExams.update.input.parse(req.body);
     const result = await storage.updateBoardExamResult(parseInt(req.params.id), input);
     res.json(result);
   });
 
   app.delete(api.boardExams.delete.path, isAuthenticated, async (req, res) => {
+    const user = req.user as any;
+    
+    // Fetch board exam to check programId
+    const examId = parseInt(req.params.id);
+    const [existingExam] = await db.select().from(boardExamResults).where(eq(boardExamResults.id, examId));
+    
+    if (!existingExam) {
+      return res.status(404).json({ message: "Board exam result not found" });
+    }
+    
+    if (!checkProgramHeadAuthorization(user, existingExam.programId)) {
+      return res.status(403).json({ message: "Not authorized to delete this board exam result" });
+    }
+    
     await storage.deleteBoardExamResult(parseInt(req.params.id));
     res.status(204).send();
   });
@@ -508,7 +575,14 @@ export async function registerRoutes(
     if (!['admin', 'program_head'].includes(user.role)) {
       return res.status(403).json({ message: "Only admins and program heads can create competencies" });
     }
+    
     const { poIds, ...data } = api.competencies.create.input.parse(req.body);
+    
+    // Check authorization for program heads
+    if (user.role === 'program_head' && data.programId !== user.programId) {
+      return res.status(403).json({ message: "Not authorized to create competencies for this program" });
+    }
+    
     const comp = await storage.createCompetency(data, poIds);
     res.status(201).json(comp);
   });
@@ -518,6 +592,17 @@ export async function registerRoutes(
     if (!['admin', 'program_head'].includes(user.role)) {
       return res.status(403).json({ message: "Only admins and program heads can update competencies" });
     }
+    
+    // Fetch competency to check programId
+    const competency = await storage.getCompetency(parseInt(req.params.id));
+    if (!competency) {
+      return res.status(404).json({ message: "Competency not found" });
+    }
+    
+    if (user.role === 'program_head' && competency.programId !== user.programId) {
+      return res.status(403).json({ message: "Not authorized to update this competency" });
+    }
+    
     const { poIds, ...data } = api.competencies.update.input.parse(req.body);
     const comp = await storage.updateCompetency(parseInt(req.params.id), data, poIds);
     res.json(comp);
@@ -528,6 +613,17 @@ export async function registerRoutes(
     if (!['admin', 'program_head'].includes(user.role)) {
       return res.status(403).json({ message: "Only admins and program heads can delete competencies" });
     }
+    
+    // Fetch competency to check programId
+    const competency = await storage.getCompetency(parseInt(req.params.id));
+    if (!competency) {
+      return res.status(404).json({ message: "Competency not found" });
+    }
+    
+    if (user.role === 'program_head' && competency.programId !== user.programId) {
+      return res.status(403).json({ message: "Not authorized to delete this competency" });
+    }
+    
     await storage.deleteCompetency(parseInt(req.params.id));
     res.status(204).send();
   });
