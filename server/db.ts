@@ -2,7 +2,6 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "@shared/schema";
 
-<<<<<<< HEAD
 // Load DB config from environment
 const dbConfig = {
   host: process.env.MYSQL_HOSTNAME || process.env.PGHOST,
@@ -39,28 +38,3 @@ if (hasMysqlConfig) {
 }
 
 export const db = dbInstance;
-=======
-const dbConfig = {
-  host: process.env.MYSQL_HOSTNAME,
-  database: process.env.MYSQL_DBNAME,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-};
-
-if (!dbConfig.host || !dbConfig.database || !dbConfig.user || !dbConfig.password) {
-  throw new Error(
-    "Missing MySQL environment variables. Please ensure MYSQL_HOSTNAME, MYSQL_DBNAME, MYSQL_USER, and MYSQL_PASSWORD are set.",
-  );
-}
-
-const pool = mysql.createPool({
-  ...dbConfig,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-});
-
-export const db = drizzle(pool, { schema, mode: "default" });
->>>>>>> origin/main
