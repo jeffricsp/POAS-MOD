@@ -26,7 +26,8 @@ export async function registerRoutes(
 
   // Request logging middleware for debugging
   app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path} - User: ${(req.user as any)?.id || 'anonymous'}`);
+    const userId = (req.user as any)?.id || 'anonymous';
+    console.log(`${req.method} ${req.path} - User: ${userId}`);
     next();
   });
 
@@ -372,9 +373,10 @@ export async function registerRoutes(
       res.json(userWithoutPassword);
     } catch (error) {
       console.error('Error updating profile:', error);
+      const isDevelopment = process.env.NODE_ENV === 'development';
       res.status(500).json({ 
         message: "Failed to update profile", 
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: isDevelopment && error instanceof Error ? error.message : undefined
       });
     }
   });
@@ -411,13 +413,8 @@ export async function registerRoutes(
       }
       
       // Check if user has password (OAuth users don't)
-      if (!user.password) {
+      if (!user.password || user.googleId) {
         return res.status(400).json({ message: "Cannot change password for OAuth users" });
-      }
-      
-      // Check if user uses Google OAuth
-      if (user.googleId) {
-        return res.status(400).json({ message: "Cannot change password for Google OAuth accounts" });
       }
       
       // Verify current password
@@ -435,9 +432,10 @@ export async function registerRoutes(
       res.json({ message: "Password changed successfully" });
     } catch (error) {
       console.error('Error changing password:', error);
+      const isDevelopment = process.env.NODE_ENV === 'development';
       res.status(500).json({ 
         message: "Failed to change password", 
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: isDevelopment && error instanceof Error ? error.message : undefined
       });
     }
   });
