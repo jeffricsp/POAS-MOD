@@ -6,9 +6,6 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import crypto from 'crypto';
 import { sendInvitationEmail } from './email';
-import { db } from "./db";
-import { boardExamResults } from "@shared/schema";
-import { eq } from "drizzle-orm";
 
 // Authorization helper for program head access control
 function checkProgramHeadAuthorization(user: any, programId: number): boolean {
@@ -513,7 +510,7 @@ export async function registerRoutes(
     
     // Fetch board exam to check programId
     const examId = parseInt(req.params.id);
-    const [existingExam] = await db.select().from(boardExamResults).where(eq(boardExamResults.id, examId));
+    const existingExam = await storage.getBoardExamResult(examId);
     
     if (!existingExam) {
       return res.status(404).json({ message: "Board exam result not found" });
@@ -533,7 +530,7 @@ export async function registerRoutes(
     
     // Fetch board exam to check programId
     const examId = parseInt(req.params.id);
-    const [existingExam] = await db.select().from(boardExamResults).where(eq(boardExamResults.id, examId));
+    const existingExam = await storage.getBoardExamResult(examId);
     
     if (!existingExam) {
       return res.status(404).json({ message: "Board exam result not found" });
