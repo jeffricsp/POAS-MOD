@@ -331,6 +331,27 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  // Update user profile
+  app.patch('/api/users/:id/profile', isAuthenticated, async (req, res) => {
+    const currentUser = req.user as any;
+    const userId = req.params.id;
+    
+    // Users can only update their own profile (unless admin)
+    if (currentUser.id !== userId && currentUser.role !== 'admin') {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    
+    const { firstName, lastName, email } = req.body;
+    
+    try {
+      await storage.updateUserProfile(userId, { firstName, lastName, email });
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update profile" });
+    }
+  });
+
   // Admin change password for non-OAuth users
   app.patch('/api/users/:id/password', isAuthenticated, async (req, res) => {
     const currentUser = req.user as any;

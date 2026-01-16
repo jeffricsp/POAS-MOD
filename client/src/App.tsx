@@ -23,6 +23,7 @@ import FeedbackPage from "@/pages/employer/FeedbackPage";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
+import SettingsPage from "@/pages/SettingsPage";
 
 function ProtectedRoute({ component: Component, roles }: { component: React.ComponentType, roles?: string[] }) {
   const { user, isLoading } = useAuth();
@@ -99,6 +100,9 @@ function Router() {
       </Route>
       <Route path="/notifications">
         <ProtectedRoute component={NotificationsPage} />
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute component={SettingsPage} />
       </Route>
       <Route path="/analytics">
         <ProtectedRoute component={Reports} roles={['program_head']} />
