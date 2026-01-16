@@ -107,7 +107,7 @@ export function Sidebar() {
       label: "Settings",
       href: "/settings",
       icon: Settings,
-      show: isAdmin,
+      show: true,
     },
   ];
 
