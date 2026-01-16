@@ -34,8 +34,28 @@ export default function SettingsPage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    // API call to update profile
-    toast({ title: "Profile updated successfully" });
+    try {
+      const response = await fetch(`/api/users/${user?.id}/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ firstName, lastName, email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      toast({ title: "Profile updated successfully" });
+    } catch (error) {
+      toast({ 
+        title: "Failed to update profile", 
+        variant: "destructive",
+        description: error instanceof Error ? error.message : "Please try again"
+      });
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -44,11 +64,33 @@ export default function SettingsPage() {
       toast({ title: "Passwords don't match", variant: "destructive" });
       return;
     }
-    // API call to change password
-    toast({ title: "Password changed successfully" });
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    
+    try {
+      const response = await fetch(`/api/users/${user?.id}/change-password`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to change password');
+      }
+
+      toast({ title: "Password changed successfully" });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      toast({ 
+        title: "Failed to change password", 
+        variant: "destructive",
+        description: error instanceof Error ? error.message : "Please try again"
+      });
+    }
   };
 
   return (
@@ -60,7 +102,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               Profile

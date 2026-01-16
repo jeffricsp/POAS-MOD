@@ -352,6 +352,58 @@ export async function registerRoutes(
     }
   });
 
+  // User change own password (requires current password verification)
+  app.patch('/api/users/:id/change-password', isAuthenticated, async (req, res) => {
+    const currentUser = req.user as any;
+    const userId = req.params.id;
+    
+    // Users can only change their own password
+    if (currentUser.id !== userId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters" });
+    }
+    
+    try {
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if user uses Google OAuth
+      if (user.googleId) {
+        return res.status(400).json({ message: "Cannot change password for Google OAuth accounts" });
+      }
+      
+      // Verify current password
+      const bcrypt = await import('bcryptjs');
+      if (!user.password) {
+        return res.status(400).json({ message: "User has no password set" });
+      }
+      
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash and update password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUserPassword(userId, hashedPassword);
+      
+      res.json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
   // Admin change password for non-OAuth users
   app.patch('/api/users/:id/password', isAuthenticated, async (req, res) => {
     const currentUser = req.user as any;
