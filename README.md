@@ -80,13 +80,21 @@ A Program Outcome (PO) Assessment System designed for educational institutions t
 
 ## Deployment
 
-This application runs on port 5000 by default. For production deployment, use Nginx or Apache as a reverse proxy to serve on port 80.
+This application runs on port 5000 by default. For production deployment:
 
-### Standard Linux (Ubuntu/Debian)
-See [NGINX_SETUP.md](NGINX_SETUP.md) for detailed Nginx setup instructions.
+### LiteSpeed Web Server (DirectAdmin)
+See [LITESPEED_SETUP.md](LITESPEED_SETUP.md)
 
-### DirectAdmin + CloudLinux
-See [DIRECTADMIN_SETUP.md](DIRECTADMIN_SETUP.md) for DirectAdmin-specific setup instructions.
+### Cloudflare Tunnel (Recommended for Shared/Reseller Hosting)
+See [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md)
+
+### Standard Linux (Ubuntu/Debian with Nginx)
+See [NGINX_SETUP.md](NGINX_SETUP.md)
+
+### DirectAdmin with Apache/Nginx
+See [DIRECTADMIN_SETUP.md](DIRECTADMIN_SETUP.md)
+
+**Recommended:** Use Cloudflare Tunnel if you don't have sudo/root access. It works on any hosting platform and requires no server configuration.
 
 ## Project Structure
 
