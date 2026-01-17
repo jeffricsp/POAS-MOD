@@ -73,7 +73,7 @@ sudo ufw enable
 1. Make sure your Node.js app is running on port 5000:
    ```bash
    # Check if app is running
-   curl http://localhost:5000/api/health
+   curl http://localhost:5000/
    ```
 
 2. Access your site without port number:
