@@ -24,18 +24,6 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  // Request logging middleware for debugging
-  app.use((req, res, next) => {
-    const userId = (req.user as any)?.id || 'anonymous';
-    console.log(`${req.method} ${req.path} - User: ${userId}`);
-    next();
-  });
-
-  // Health check endpoint
-  app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
-
   // === API ROUTES ===
 
   // Program Outcomes
