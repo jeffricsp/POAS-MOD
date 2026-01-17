@@ -1,5 +1,7 @@
 # Quick Fix for Passenger 503 Error
 
+> **Note:** Replace `poaes` with your username and `poaes.cicte.link` with your domain in the commands below.
+
 Your app is configured with **Phusion Passenger**. Here's the 5-minute fix:
 
 ## Fix Steps

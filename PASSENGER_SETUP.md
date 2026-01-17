@@ -1,5 +1,7 @@
 # Phusion Passenger Setup Guide (CloudLinux + DirectAdmin)
 
+> **Note:** This guide uses example paths with username `poaes` and domain `poaes.cicte.link`. Replace these with your actual username and domain throughout the guide.
+
 Your server uses **Phusion Passenger** - a sophisticated Node.js application manager built into CloudLinux. This is **much better** than manual proxies because Passenger handles everything automatically!
 
 ## What is Passenger?

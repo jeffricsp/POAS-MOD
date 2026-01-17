@@ -12,7 +12,7 @@
     "db:push": "drizzle-kit push",
     "passenger:restart": "mkdir -p tmp && touch tmp/restart.txt",
     "passenger:logs": "tail -f log/passenger.log || echo 'No logs yet'",
-    "passenger:status": "ps aux | grep Passenger"
+    "passenger:status": "ps aux | grep -E 'Passenger|node' | grep -v grep"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
