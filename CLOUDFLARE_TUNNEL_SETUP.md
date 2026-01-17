@@ -1,10 +1,10 @@
-# CloudFlare Tunnel Setup (No Server Config Required!)
+# Cloudflare Tunnel Setup (No Server Config Required!)
 
 **Best option for reseller/shared hosting** where you don't have sudo or LiteSpeed admin access.
 
-## What is CloudFlare Tunnel?
+## What is Cloudflare Tunnel?
 
-CloudFlare Tunnel creates a secure connection from your server to CloudFlare's network, allowing you to expose your Node.js app without configuring web servers.
+Cloudflare Tunnel creates a secure connection from your server to Cloudflare's network, allowing you to expose your Node.js app without configuring web servers.
 
 **Benefits:**
 - ✅ No server configuration needed
@@ -16,19 +16,19 @@ CloudFlare Tunnel creates a secure connection from your server to CloudFlare's n
 
 ## Prerequisites
 
-- CloudFlare account (free)
-- Your domain managed by CloudFlare DNS
+- Cloudflare account (free)
+- Your domain managed by Cloudflare DNS
 - SSH access to your server
 - Node.js app running on port 5000
 
-## Step 1: Add Domain to CloudFlare
+## Step 1: Add Domain to Cloudflare
 
 1. **Sign up at** [cloudflare.com](https://cloudflare.com) (free)
 2. **Add your domain** `poaes.cicte.link`
-3. **Update nameservers** at your domain registrar to CloudFlare's nameservers
+3. **Update nameservers** at your domain registrar to Cloudflare's nameservers
 4. **Wait for DNS propagation** (usually 5-10 minutes)
 
-## Step 2: Download CloudFlared
+## Step 2: Download Cloudflared
 
 ```bash
 # SSH into your server
@@ -44,16 +44,16 @@ chmod +x cloudflared-linux-amd64
 # or just run from current directory
 ```
 
-## Step 3: Authenticate with CloudFlare
+## Step 3: Authenticate with Cloudflare
 
 ```bash
-# Login to CloudFlare
+# Login to Cloudflare
 ./cloudflared-linux-amd64 tunnel login
 ```
 
 This will:
 1. Open a browser window
-2. Ask you to log into CloudFlare
+2. Ask you to log into Cloudflare
 3. Select your domain
 4. Download a certificate to `~/.cloudflared/cert.pem`
 
@@ -78,7 +78,7 @@ This creates a tunnel and saves credentials to:
 ./cloudflared-linux-amd64 tunnel route dns poaes-app poaes.cicte.link
 ```
 
-This creates a CNAME record in CloudFlare DNS pointing to your tunnel.
+This creates a CNAME record in Cloudflare DNS pointing to your tunnel.
 
 ## Step 6: Create Configuration File
 
@@ -237,8 +237,8 @@ pkill cloudflared  # Stop existing instance
 
 ### DNS Not Resolving
 
-**Check CloudFlare DNS:**
-1. Log into CloudFlare dashboard
+**Check Cloudflare DNS:**
+1. Log into Cloudflare dashboard
 2. Go to DNS settings
 3. Verify CNAME record exists for `poaes.cicte.link`
 4. Should point to `<TUNNEL-ID>.cfargotunnel.com`
@@ -271,7 +271,7 @@ Make sure paths in `~/.cloudflared/config.yml` are correct.
 
 ## Advantages Over LiteSpeed Config
 
-**CloudFlare Tunnel:**
+**Cloudflare Tunnel:**
 - ✅ No server configuration needed
 - ✅ No sudo/root access required
 - ✅ Works on shared/reseller hosting
@@ -303,7 +303,7 @@ ingress:
 
 ## Cost
 
-**CloudFlare Tunnel:** 100% FREE
+**Cloudflare Tunnel:** 100% FREE
 - No bandwidth limits
 - Unlimited requests
 - Free SSL

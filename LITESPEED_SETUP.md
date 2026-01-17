@@ -254,19 +254,19 @@ If you have access to LiteSpeed Admin (usually at `https://your-server-ip:7080`)
 
 ⚠️ **Warning:** Ports below 1024 require root privileges. This is NOT recommended.
 
-Better to use CloudFlare Tunnel instead (see next section).
+Better to use Cloudflare Tunnel instead (see next section).
 
-## CloudFlare Tunnel Alternative (Recommended)
+## Cloudflare Tunnel Alternative (Recommended)
 
 If LiteSpeed configuration is too complex or you don't have access:
 
 ```bash
-# Download CloudFlare tunnel
+# Download Cloudflare tunnel
 cd ~
 wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
 chmod +x cloudflared-linux-amd64
 
-# Login to CloudFlare
+# Login to Cloudflare
 ./cloudflared-linux-amd64 tunnel login
 
 # Create tunnel
@@ -279,9 +279,9 @@ chmod +x cloudflared-linux-amd64
 ./cloudflared-linux-amd64 tunnel --url http://localhost:5000 run poaes-app
 ```
 
-This bypasses LiteSpeed completely and tunnels directly to your Node.js app through CloudFlare's network.
+This bypasses LiteSpeed completely and tunnels directly to your Node.js app through Cloudflare's network.
 
-See `CLOUDFLARE_TUNNEL_SETUP.md` for detailed CloudFlare Tunnel setup.
+See `CLOUDFLARE_TUNNEL_SETUP.md` for detailed Cloudflare Tunnel setup.
 
 ## Verifying Success
 
@@ -336,4 +336,4 @@ pm2 restart poaes-app
 
 **If you get stuck:**
 - Contact hosting support (template provided above)
-- Or use CloudFlare Tunnel (no server config needed)
+- Or use Cloudflare Tunnel (no server config needed)

@@ -16,14 +16,14 @@ ps aux | grep -E 'httpd|nginx|lsws|litespeed'
 
 ## Don't Have Server Access?
 
-Use **CloudFlare Tunnel** → See [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md)
+Use **Cloudflare Tunnel** → See [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md)
 
 - ✅ No server config needed
 - ✅ Works on shared hosting
 - ✅ Free SSL included
 - ✅ 5 minute setup
 
-## Quick CloudFlare Setup
+## Quick Cloudflare Setup
 
 ```bash
 wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
