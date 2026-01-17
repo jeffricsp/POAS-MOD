@@ -82,6 +82,27 @@ A Program Outcome (PO) Assessment System designed for educational institutions t
 
 This application runs on port 5000 by default. For production deployment:
 
+### Production Deployment (Passenger)
+
+This app is deployed with **Phusion Passenger** on CloudLinux + DirectAdmin.
+
+**Production setup:** The app builds to `dist/index.js` which Passenger runs automatically.
+
+**To deploy updates:**
+```bash
+# 1. Build the app
+npm run build
+
+# 2. Restart Passenger
+touch tmp/restart.txt
+```
+
+See [PASSENGER_WORKING.md](PASSENGER_WORKING.md) for complete production configuration.
+
+**⚠️ Important:** The production build uses `dist/index.js`. Do not modify Passenger configuration or add development middleware that can interfere with the production build.
+
+### Other Deployment Options
+
 ### LiteSpeed Web Server (DirectAdmin)
 See [LITESPEED_SETUP.md](LITESPEED_SETUP.md)
 
