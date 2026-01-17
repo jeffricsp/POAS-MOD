@@ -80,15 +80,13 @@ A Program Outcome (PO) Assessment System designed for educational institutions t
 
 ## Deployment
 
-### Production Setup with Nginx
+This application runs on port 5000 by default. For production deployment, use Nginx or Apache as a reverse proxy to serve on port 80.
 
-This application runs on port 5000 by default. For production deployment with Nginx reverse proxy:
+### Standard Linux (Ubuntu/Debian)
+See [NGINX_SETUP.md](NGINX_SETUP.md) for detailed Nginx setup instructions.
 
-1. Follow instructions in [NGINX_SETUP.md](NGINX_SETUP.md)
-2. Ensure your app is running on port 5000
-3. Nginx will proxy requests from port 80 to your app
-
-See [NGINX_SETUP.md](NGINX_SETUP.md) for detailed setup instructions.
+### DirectAdmin + CloudLinux
+See [DIRECTADMIN_SETUP.md](DIRECTADMIN_SETUP.md) for DirectAdmin-specific setup instructions.
 
 ## Project Structure
 
