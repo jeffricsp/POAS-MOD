@@ -45,11 +45,13 @@ export default function SettingsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update profile');
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `Server error: ${response.status}`);
       }
 
       toast({ title: "Profile updated successfully" });
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({ 
         title: "Failed to update profile", 
         variant: "destructive",
@@ -76,8 +78,8 @@ export default function SettingsPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to change password');
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `Server error: ${response.status}`);
       }
 
       toast({ title: "Password changed successfully" });
@@ -85,6 +87,7 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
+      console.error('Password change error:', error);
       toast({ 
         title: "Failed to change password", 
         variant: "destructive",

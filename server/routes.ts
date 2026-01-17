@@ -24,6 +24,18 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  // Request logging middleware for debugging
+  app.use((req, res, next) => {
+    const userId = (req.user as any)?.id || 'anonymous';
+    console.log(`${req.method} ${req.path} - User: ${userId}`);
+    next();
+  });
+
+  // Health check endpoint
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   // === API ROUTES ===
 
   // Program Outcomes
@@ -333,63 +345,82 @@ export async function registerRoutes(
 
   // Update user profile
   app.patch('/api/users/:id/profile', isAuthenticated, async (req, res) => {
-    const currentUser = req.user as any;
-    const userId = req.params.id;
-    
-    // Users can only update their own profile (unless admin)
-    if (currentUser.id !== userId && currentUser.role !== 'admin') {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-    
-    const { firstName, lastName, email } = req.body;
-    
     try {
+      const currentUser = req.user as any;
+      const userId = req.params.id;
+      
+      // Users can only update their own profile (unless admin)
+      if (currentUser.id !== userId && currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      // Validate request body
+      if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ message: "Request body is required" });
+      }
+      
+      const { firstName, lastName, email } = req.body;
+      
       await storage.updateUserProfile(userId, { firstName, lastName, email });
       const updatedUser = await storage.getUser(userId);
-      res.json(updatedUser);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Strip password from response
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
     } catch (error) {
-      res.status(400).json({ message: "Failed to update profile" });
+      console.error('Error updating profile:', error);
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      res.status(500).json({ 
+        message: "Failed to update profile", 
+        error: isDevelopment && error instanceof Error ? error.message : undefined
+      });
     }
   });
 
   // User change own password (requires current password verification)
   app.patch('/api/users/:id/change-password', isAuthenticated, async (req, res) => {
-    const currentUser = req.user as any;
-    const userId = req.params.id;
-    
-    // Users can only change their own password
-    if (currentUser.id !== userId) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-    
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: "Current password and new password are required" });
-    }
-    
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: "New password must be at least 6 characters" });
-    }
-    
     try {
+      const currentUser = req.user as any;
+      const userId = req.params.id;
+      
+      // Users can only change their own password
+      if (currentUser.id !== userId) {
+        return res.status(403).json({ message: "Not authorized to change another user's password" });
+      }
+      
+      // Validate request body
+      if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ message: "Request body is required" });
+      }
+      
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+      
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "New password must be at least 6 characters" });
+      }
+      
       // Get user
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Check if user uses Google OAuth
-      if (user.googleId) {
-        return res.status(400).json({ message: "Cannot change password for Google OAuth accounts" });
+      // Check if user has password (OAuth users don't)
+      if (!user.password || user.googleId) {
+        return res.status(400).json({ message: "Cannot change password for OAuth users" });
       }
       
       // Verify current password
       const bcrypt = await import('bcryptjs');
-      if (!user.password) {
-        return res.status(400).json({ message: "User has no password set" });
-      }
-      
       const isValid = await bcrypt.compare(currentPassword, user.password);
+      
       if (!isValid) {
         return res.status(400).json({ message: "Current password is incorrect" });
       }
@@ -398,9 +429,14 @@ export async function registerRoutes(
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await storage.updateUserPassword(userId, hashedPassword);
       
-      res.json({ success: true, message: "Password changed successfully" });
+      res.json({ message: "Password changed successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to change password" });
+      console.error('Error changing password:', error);
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      res.status(500).json({ 
+        message: "Failed to change password", 
+        error: isDevelopment && error instanceof Error ? error.message : undefined
+      });
     }
   });
 
