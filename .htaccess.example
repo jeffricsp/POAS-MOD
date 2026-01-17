@@ -1,0 +1,38 @@
+# Example .htaccess for Phusion Passenger
+# 
+# IMPORTANT: This file should be placed in your domain's public_html directory,
+# NOT in the application root directory.
+#
+# Location: /home/USERNAME/domains/your-domain.com/public_html/.htaccess
+#
+# Replace the following placeholders:
+# - /home/USERNAME/app → Your actual app directory path
+# - /home/USERNAME/nodevenv/app/20/bin/node → Your actual Node.js path
+
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/USERNAME/app"
+PassengerBaseURI "/"
+PassengerNodejs "/home/USERNAME/nodevenv/app/20/bin/node"
+PassengerAppType node
+PassengerStartupFile server/index.ts
+PassengerNodeAppStartCommand "node --loader tsx server/index.ts"
+
+# Environment variables
+SetEnv NODE_ENV production
+SetEnv PORT 5000
+
+# Logging (3 = info level, useful for debugging)
+PassengerLogLevel 3
+
+# Performance tuning
+PassengerMinInstances 1
+PassengerMaxPoolSize 6
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+# Passenger restart directory
+PassengerRestartDir /home/USERNAME/app/tmp
+
+# Optional: Force HTTPS (uncomment after SSL is configured)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

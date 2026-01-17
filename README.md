@@ -82,19 +82,41 @@ A Program Outcome (PO) Assessment System designed for educational institutions t
 
 This application runs on port 5000 by default. For production deployment:
 
-### LiteSpeed Web Server (DirectAdmin)
+### Phusion Passenger (CloudLinux + DirectAdmin)
+
+**Recommended for DirectAdmin hosting with CloudLinux.**
+
+See [PASSENGER_SETUP.md](PASSENGER_SETUP.md) for complete configuration guide.
+
+**Quick start:**
+1. Upload code to `/home/USERNAME/app/`
+2. Configure `.htaccess` in `public_html/` (see [QUICK_FIX_PASSENGER.md](QUICK_FIX_PASSENGER.md))
+3. Run `npm install`
+4. Touch `tmp/restart.txt` to restart
+
+**Your app will be available at:** `http://your-domain.com` (no port needed!)
+
+Passenger provides:
+- ✅ Automatic application startup and monitoring
+- ✅ Zero-downtime restarts
+- ✅ Built-in process management
+- ✅ DirectAdmin integration
+
+### Alternative Deployments
+
+#### LiteSpeed Web Server (DirectAdmin)
 See [LITESPEED_SETUP.md](LITESPEED_SETUP.md)
 
-### Cloudflare Tunnel (Recommended for Shared/Reseller Hosting)
+#### Cloudflare Tunnel (Recommended for Shared/Reseller Hosting)
 See [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md)
 
-### Standard Linux (Ubuntu/Debian with Nginx)
+#### Standard Linux (Ubuntu/Debian with Nginx)
 See [NGINX_SETUP.md](NGINX_SETUP.md)
 
-### DirectAdmin with Apache/Nginx
+#### DirectAdmin with Apache/Nginx
 See [DIRECTADMIN_SETUP.md](DIRECTADMIN_SETUP.md)
 
-**Recommended:** Use Cloudflare Tunnel if you don't have sudo/root access. It works on any hosting platform and requires no server configuration.
+**Note:** If your hosting uses Passenger, follow the Passenger guide above. Use Cloudflare Tunnel if you don't have sudo/root access.
 
 ## Project Structure
 
@@ -116,11 +138,18 @@ See [DIRECTADMIN_SETUP.md](DIRECTADMIN_SETUP.md)
 
 ## Available Scripts
 
+### Development
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
-- `npm start` - Start production server
+- `npm start` - Start production server (compiled)
+- `npm run start:prod` - Start production server with TypeScript (for Passenger)
 - `npm run check` - Type check with TypeScript
 - `npm run db:push` - Push database schema changes
+
+### Passenger Deployment (CloudLinux + DirectAdmin)
+- `npm run passenger:restart` - Restart Passenger app (creates tmp/restart.txt)
+- `npm run passenger:logs` - View Passenger logs
+- `npm run passenger:status` - Check Passenger process status
 
 ## License
 
