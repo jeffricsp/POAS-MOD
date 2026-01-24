@@ -60,28 +60,17 @@ export async function registerRoutes(
   // Courses
   app.get(api.courses.list.path, isAuthenticated, async (req, res) => {
     const user = req.user as any;
-    let courses = await storage.getCourses();
+    let programId: number | undefined = undefined;
     
-    // Program heads only see courses linked to their program's POs
+    // Program heads only see courses for their program
     if (user.role === 'program_head') {
       if (!user.programId) {
         return res.json([]); // No program assigned, return empty
       }
-      const programPos = await storage.getPOs();
-      const programPoIds = programPos
-        .filter(po => po.programId === user.programId)
-        .map(po => po.id);
-      
-      const allMappings = await storage.getAllCoursePOMappings();
-      const courseIdsInProgram = new Set(
-        allMappings
-          .filter(m => programPoIds.includes(m.poId))
-          .map(m => m.courseId)
-      );
-      
-      courses = courses.filter(c => courseIdsInProgram.has(c.id));
+      programId = user.programId;
     }
     
+    const courses = await storage.getCourses(programId);
     res.json(courses);
   });
 
@@ -92,7 +81,14 @@ export async function registerRoutes(
   });
 
   app.post(api.courses.create.path, isAuthenticated, async (req, res) => {
+    const user = req.user as any;
     const input = api.courses.create.input.parse(req.body);
+    
+    // Set programId for program heads
+    if (user.role === 'program_head' && user.programId) {
+      (input as any).programId = user.programId;
+    }
+    
     const course = await storage.createCourse(input);
     res.status(201).json(course);
   });
@@ -122,36 +118,17 @@ export async function registerRoutes(
   // Surveys
   app.get(api.surveys.list.path, isAuthenticated, async (req, res) => {
     const user = req.user as any;
-    let surveys = await storage.getSurveys();
+    let programId: number | undefined = undefined;
     
-    // Program heads only see surveys linked to courses in their program
+    // Program heads only see surveys for their program
     if (user.role === 'program_head') {
       if (!user.programId) {
         return res.json([]); // No program assigned, return empty
       }
-      const programPos = await storage.getPOs();
-      const programPoIds = programPos
-        .filter(po => po.programId === user.programId)
-        .map(po => po.id);
-      
-      const allMappings = await storage.getAllCoursePOMappings();
-      const courseIdsInProgram = new Set(
-        allMappings
-          .filter(m => programPoIds.includes(m.poId))
-          .map(m => m.courseId)
-      );
-      
-      // Filter surveys that are linked to courses in the program
-      const filteredSurveys = [];
-      for (const survey of surveys) {
-        const surveyCourseIds = await storage.getSurveyCourseLinks(survey.id);
-        if (surveyCourseIds.length === 0 || surveyCourseIds.some(cid => courseIdsInProgram.has(cid))) {
-          filteredSurveys.push(survey);
-        }
-      }
-      surveys = filteredSurveys;
+      programId = user.programId;
     }
     
+    const surveys = await storage.getSurveys(programId);
     res.json(surveys);
   });
 
@@ -197,8 +174,15 @@ export async function registerRoutes(
   });
 
   app.post(api.surveys.create.path, isAuthenticated, async (req, res) => {
+    const user = req.user as any;
     const input = api.surveys.create.input.parse(req.body);
     const { questions, courseIds, ...surveyData } = input;
+    
+    // Set programId for program heads
+    if (user.role === 'program_head' && user.programId) {
+      (surveyData as any).programId = user.programId;
+    }
+    
     const survey = await storage.createSurvey(surveyData, questions, courseIds);
     res.status(201).json(survey);
   });
@@ -229,20 +213,48 @@ export async function registerRoutes(
 
   // Enrollments
   app.get(api.enrollments.list.path, isAuthenticated, async (req, res) => {
-    const enrollments = await storage.getAllEnrollments();
+    const user = req.user as any;
+    let programId: number | undefined = undefined;
+    
+    // Program heads only see enrollments for their program
+    if (user.role === 'program_head') {
+      if (!user.programId) {
+        return res.json([]); // No program assigned, return empty
+      }
+      programId = user.programId;
+    }
+    
+    const enrollments = await storage.getAllEnrollments(programId);
     res.json(enrollments);
   });
 
   app.post(api.enrollments.create.path, isAuthenticated, async (req, res) => {
     const input = api.enrollments.create.input.parse(req.body);
+    
+    // Get the course to determine its programId
+    const course = await storage.getCourse(input.courseId);
+    if (course && course.programId) {
+      (input as any).programId = course.programId;
+    }
+    
     const enrollment = await storage.createEnrollment(input);
     res.status(201).json(enrollment);
   });
 
   app.post(api.enrollments.bulkCreate.path, isAuthenticated, async (req, res) => {
     const input = api.enrollments.bulkCreate.input.parse(req.body);
-    await storage.bulkCreateEnrollments(input);
-    res.status(201).json({ count: input.length });
+    
+    // Set programId for each enrollment based on its course
+    const enrichedInput = await Promise.all(input.map(async (enrollment) => {
+      const course = await storage.getCourse(enrollment.courseId);
+      return {
+        ...enrollment,
+        programId: course?.programId || null
+      };
+    }));
+    
+    await storage.bulkCreateEnrollments(enrichedInput);
+    res.status(201).json({ count: enrichedInput.length });
   });
 
   app.get('/api/courses/:courseId/enrollments', isAuthenticated, async (req, res) => {
@@ -276,7 +288,18 @@ export async function registerRoutes(
 
   // Employer Feedback
   app.get(api.employerFeedback.list.path, isAuthenticated, async (req, res) => {
-    const feedback = await storage.getEmployerFeedback();
+    const user = req.user as any;
+    let programId: number | undefined = undefined;
+    
+    // Program heads only see feedback for their program
+    if (user.role === 'program_head') {
+      if (!user.programId) {
+        return res.json([]); // No program assigned, return empty
+      }
+      programId = user.programId;
+    }
+    
+    const feedback = await storage.getEmployerFeedback(programId);
     res.json(feedback);
   });
 

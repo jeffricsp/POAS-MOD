@@ -52,6 +52,7 @@ export const courses = mysqlTable("courses", {
   code: varchar("code", { length: 50 }).notNull().unique(), 
   name: text("name").notNull(),
   credits: int("credits").notNull().default(3),
+  programId: int("program_id"),
 });
 
 export const coursePoMappings = mysqlTable("course_po_mappings", {
@@ -68,6 +69,7 @@ export const enrollments = mysqlTable("enrollments", {
   grade: int("grade").notNull(), 
   academicYear: varchar("academic_year", { length: 20 }).notNull(),
   term: text("term").notNull(),
+  programId: int("program_id"),
 });
 
 export const surveys = mysqlTable("surveys", {
@@ -76,6 +78,7 @@ export const surveys = mysqlTable("surveys", {
   targetRole: mysqlEnum("target_role", ['student', 'graduate', 'employer']).notNull(),
   description: text("description"),
   isActive: boolean("is_active").default(true),
+  programId: int("program_id"),
 });
 
 export const surveyQuestions = mysqlTable("survey_questions", {
