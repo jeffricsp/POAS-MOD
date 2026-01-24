@@ -42,7 +42,8 @@ export async function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS program_outcomes (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      code VARCHAR(50) NOT NULL UNIQUE,
+      program_id INT NOT NULL,
+      code VARCHAR(50) NOT NULL,
       description TEXT NOT NULL
     );
 
@@ -50,7 +51,8 @@ export async function initDatabase() {
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       code VARCHAR(50) NOT NULL UNIQUE,
       name TEXT NOT NULL,
-      credits INT NOT NULL DEFAULT 3
+      credits INT NOT NULL DEFAULT 3,
+      program_id INT
     );
 
     CREATE TABLE IF NOT EXISTS course_po_mappings (
@@ -65,7 +67,9 @@ export async function initDatabase() {
       user_id VARCHAR(255) NOT NULL,
       course_id INT NOT NULL,
       grade INT NOT NULL,
-      term TEXT NOT NULL
+      academic_year VARCHAR(20) NOT NULL,
+      term TEXT NOT NULL,
+      program_id INT
     );
 
     CREATE TABLE IF NOT EXISTS surveys (
@@ -73,7 +77,8 @@ export async function initDatabase() {
       title TEXT NOT NULL,
       target_role ENUM('student', 'graduate', 'employer') NOT NULL,
       description TEXT,
-      is_active BOOLEAN DEFAULT TRUE
+      is_active BOOLEAN DEFAULT TRUE,
+      program_id INT
     );
 
     CREATE TABLE IF NOT EXISTS survey_questions (
@@ -174,6 +179,89 @@ export async function initDatabase() {
     if (Array.isArray(rows) && rows.length === 0) {
       await connection.query(`
         ALTER TABLE users ADD COLUMN program_id INT NULL
+      `);
+    }
+  } catch (e: any) {
+    // Ignore errors - column might already exist or other issues
+  }
+  
+  // Add program_id column to program_outcomes if it doesn't exist
+  try {
+    const [rows] = await connection.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'program_outcomes' AND COLUMN_NAME = 'program_id'
+    `, [process.env.MYSQL_DBNAME]);
+    
+    if (Array.isArray(rows) && rows.length === 0) {
+      await connection.query(`
+        ALTER TABLE program_outcomes ADD COLUMN program_id INT NOT NULL DEFAULT 1
+      `);
+      // Remove the UNIQUE constraint on code if it exists
+      await connection.query(`
+        ALTER TABLE program_outcomes DROP INDEX code
+      `).catch(() => {});
+    }
+  } catch (e: any) {
+    // Ignore errors - column might already exist or other issues
+  }
+  
+  // Add program_id column to courses if it doesn't exist
+  try {
+    const [rows] = await connection.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'courses' AND COLUMN_NAME = 'program_id'
+    `, [process.env.MYSQL_DBNAME]);
+    
+    if (Array.isArray(rows) && rows.length === 0) {
+      await connection.query(`
+        ALTER TABLE courses ADD COLUMN program_id INT NULL
+      `);
+    }
+  } catch (e: any) {
+    // Ignore errors - column might already exist or other issues
+  }
+  
+  // Add academic_year and program_id columns to enrollments if they don't exist
+  try {
+    const [rows] = await connection.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'enrollments' AND COLUMN_NAME = 'academic_year'
+    `, [process.env.MYSQL_DBNAME]);
+    
+    if (Array.isArray(rows) && rows.length === 0) {
+      await connection.query(`
+        ALTER TABLE enrollments ADD COLUMN academic_year VARCHAR(20) NOT NULL DEFAULT '2024-2025'
+      `);
+    }
+  } catch (e: any) {
+    // Ignore errors - column might already exist or other issues
+  }
+  
+  try {
+    const [rows] = await connection.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'enrollments' AND COLUMN_NAME = 'program_id'
+    `, [process.env.MYSQL_DBNAME]);
+    
+    if (Array.isArray(rows) && rows.length === 0) {
+      await connection.query(`
+        ALTER TABLE enrollments ADD COLUMN program_id INT NULL
+      `);
+    }
+  } catch (e: any) {
+    // Ignore errors - column might already exist or other issues
+  }
+  
+  // Add program_id column to surveys if it doesn't exist
+  try {
+    const [rows] = await connection.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'surveys' AND COLUMN_NAME = 'program_id'
+    `, [process.env.MYSQL_DBNAME]);
+    
+    if (Array.isArray(rows) && rows.length === 0) {
+      await connection.query(`
+        ALTER TABLE surveys ADD COLUMN program_id INT NULL
       `);
     }
   } catch (e: any) {

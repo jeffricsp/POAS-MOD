@@ -16,7 +16,7 @@ export interface IStorage {
   updatePO(id: number, po: any): Promise<ProgramOutcome>;
   deletePO(id: number): Promise<void>;
 
-  getCourses(): Promise<Course[]>;
+  getCourses(programId?: number): Promise<Course[]>;
   getCourse(id: number): Promise<Course | undefined>;
   createCourse(course: any): Promise<Course>;
   updateCourse(id: number, course: any): Promise<Course>;
@@ -37,9 +37,9 @@ export interface IStorage {
   bulkCreateEnrollments(data: any[]): Promise<void>;
   getUserEnrollments(userId: string): Promise<Enrollment[]>;
   getCourseEnrollments(courseId: number): Promise<Enrollment[]>;
-  getAllEnrollments(): Promise<Enrollment[]>;
+  getAllEnrollments(programId?: number): Promise<Enrollment[]>;
 
-  getSurveys(): Promise<Survey[]>;
+  getSurveys(programId?: number): Promise<Survey[]>;
   getSurveysByProgram(programId: number, userId: string): Promise<(Survey & { hasResponded: boolean })[]>;
   getSurveyResponsesForUser(userId: string): Promise<SurveyResponse[]>;
   getSurvey(id: number): Promise<Survey & { questions: SurveyQuestion[] } | undefined>;
@@ -60,7 +60,7 @@ export interface IStorage {
 
   createEmployerFeedback(data: any): Promise<EmployerFeedback>;
   bulkCreateEmployerFeedback(data: any[]): Promise<void>;
-  getEmployerFeedback(): Promise<EmployerFeedback[]>;
+  getEmployerFeedback(programId?: number): Promise<EmployerFeedback[]>;
 
   getAnalytics(programId?: number, year?: string): Promise<any>;
 
@@ -122,7 +122,10 @@ export class DatabaseStorage implements IStorage {
     await db.delete(programOutcomes).where(eq(programOutcomes.id, id));
   }
 
-  async getCourses(): Promise<Course[]> {
+  async getCourses(programId?: number): Promise<Course[]> {
+    if (programId !== undefined) {
+      return await db.select().from(courses).where(eq(courses.programId, programId));
+    }
     return await db.select().from(courses);
   }
 
@@ -229,11 +232,17 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(enrollments).where(eq(enrollments.courseId, courseId));
   }
 
-  async getAllEnrollments(): Promise<Enrollment[]> {
+  async getAllEnrollments(programId?: number): Promise<Enrollment[]> {
+    if (programId !== undefined) {
+      return await db.select().from(enrollments).where(eq(enrollments.programId, programId));
+    }
     return await db.select().from(enrollments);
   }
 
-  async getSurveys(): Promise<Survey[]> {
+  async getSurveys(programId?: number): Promise<Survey[]> {
+    if (programId !== undefined) {
+      return await db.select().from(surveys).where(eq(surveys.programId, programId));
+    }
     return await db.select().from(surveys);
   }
 
@@ -401,8 +410,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getEmployerFeedback(): Promise<EmployerFeedback[]> {
-    return await db.select().from(employerFeedback);
+  async getEmployerFeedback(programId?: number): Promise<EmployerFeedback[]> {
+    const allFeedback = await db.select().from(employerFeedback);
+    if (!programId) return allFeedback;
+    
+    // Filter by program through PO relationship
+    const programPOs = await db.select().from(programOutcomes).where(eq(programOutcomes.programId, programId));
+    const poIds = new Set(programPOs.map(po => po.id));
+    return allFeedback.filter(f => poIds.has(f.poId));
   }
 
   async getAnalytics(programId?: number, year?: string): Promise<any> {
