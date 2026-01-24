@@ -244,14 +244,24 @@ export async function registerRoutes(
   app.post(api.enrollments.bulkCreate.path, isAuthenticated, async (req, res) => {
     const input = api.enrollments.bulkCreate.input.parse(req.body);
     
+    // Batch fetch all courses to avoid N+1 query pattern
+    const uniqueCourseIds = [...new Set(input.map(e => e.courseId))];
+    const coursesMap = new Map<number, any>();
+    for (const courseId of uniqueCourseIds) {
+      const course = await storage.getCourse(courseId);
+      if (course) {
+        coursesMap.set(courseId, course);
+      }
+    }
+    
     // Set programId for each enrollment based on its course
-    const enrichedInput = await Promise.all(input.map(async (enrollment) => {
-      const course = await storage.getCourse(enrollment.courseId);
+    const enrichedInput = input.map((enrollment) => {
+      const course = coursesMap.get(enrollment.courseId);
       return {
         ...enrollment,
         programId: course?.programId || null
       };
-    }));
+    });
     
     await storage.bulkCreateEnrollments(enrichedInput);
     res.status(201).json({ count: enrichedInput.length });
